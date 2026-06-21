@@ -1638,10 +1638,10 @@ function BAMYachtApp() {
         React.createElement("input", { ref: camRef, type: "file", accept: "image/*", capture: "environment", style: { display: "none" }, onChange: (e) => loadFile(e.target.files[0]) }),
         showSource && React.createElement("div", { onClick: () => setShowSource(false), style: { position: "fixed", inset: 0, background: "rgba(8,12,24,.78)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 } },
           React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { background: "#1a2540", border: "1px solid rgba(201,168,76,.28)", borderRadius: 10, padding: "26px 22px", width: "100%", maxWidth: 340, textAlign: "center" } },
-            React.createElement("div", { style: { fontFamily: G, fontSize: 17, color: "#e8dcc8", marginBottom: 18 } }, "Aggiungi la foto"),
+            React.createElement("div", { style: { fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 17, color: "#e8dcc8", marginBottom: 18 } }, "Aggiungi la foto"),
             React.createElement("button", { className: "gbtn", onClick: () => { setShowSource(false); camRef.current && camRef.current.click(); }, style: { width: "100%", marginBottom: 10 } }, "Scatta foto"),
             React.createElement("button", { className: "gbtn", onClick: () => { setShowSource(false); fileRef.current && fileRef.current.click(); }, style: { width: "100%", marginBottom: 14 } }, "Scegli dalla galleria"),
-            React.createElement("button", { onClick: () => setShowSource(false), style: { background: "none", border: "none", color: "rgba(232,220,200,.5)", fontSize: 13, cursor: "pointer", fontFamily: G2 } }, "Annulla")
+            React.createElement("button", { onClick: () => setShowSource(false), style: { background: "none", border: "none", color: "rgba(232,220,200,.5)", fontSize: 13, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" } }, "Annulla")
           )
         )
       ),
