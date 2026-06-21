@@ -113,10 +113,10 @@ footer{border-top:1px solid rgba(201,168,76,.07);padding:24px 20px;text-align:ce
             <input type="text" class="inp" id="bam-signup-company" required style="margin-bottom:14px" />
             <label style="display:block;font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.22em;color:rgba(201,168,76,.55);text-transform:uppercase;margin-bottom:6px">Ruolo</label>
             <select class="inp" id="bam-signup-role" required style="margin-bottom:14px">
-              <option value="broker">Broker</option>
-              <option value="dealer">Dealer</option>
-              <option value="refit_agency">Refit Agency</option>
-              <option value="shipyard">Cantiere</option>
+              <option value="broker">Agente immobiliare</option>
+              <option value="dealer">Agenzia immobiliare</option>
+              <option value="refit_agency">Costruttore / Impresa</option>
+              <option value="shipyard">Privato</option>
             </select>
             <label style="display:block;font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.22em;color:rgba(201,168,76,.55);text-transform:uppercase;margin-bottom:6px">Email aziendale</label>
             <input type="email" class="inp" id="bam-signup-email" required style="margin-bottom:14px" />
@@ -220,11 +220,12 @@ const ROOMS = [
 
 const PRESETS = [
   { v: "", l: "Dalla descrizione" },
-  { v: "Modern Luxury", l: "Modern Luxury" },
-  { v: "Scandinavian", l: "Scandinavo" },
-  { v: "Art Deco", l: "Art Déco" },
-  { v: "Mediterraneo", l: "Mediterraneo" },
-  { v: "Contemporary Dark", l: "Contemporary Dark" }
+  { v: "Modern Contemporary", l: "Moderno contemporaneo" },
+  { v: "Scandinavian", l: "Scandinavo / Nordico" },
+  { v: "Industrial Loft", l: "Industriale / Loft" },
+  { v: "Minimalist", l: "Minimalista" },
+  { v: "Classic Elegant", l: "Classico elegante" },
+  { v: "Mediterranean Coastal", l: "Mediterraneo / Costiero" }
 ];
 
 
@@ -543,6 +544,8 @@ function BAMYachtApp() {
   const updateYacht = (k, v) => setYacht(prev => Object.assign({}, prev, { [k]: v }));
   const fileRef = useRef();
   const sliderRef = useRef();
+  const camRef = useRef();
+  const [showSource, setShowSource] = useState(false);
 
   useEffect(() => {
     try {
@@ -1463,7 +1466,7 @@ function BAMYachtApp() {
           React.createElement("input", { className: "inp", type: "text", readOnly: true, value: shareLink, onFocus: (e) => e.target.select(), style: { marginBottom: 14, fontSize: 13 } }),
           React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" } },
             React.createElement("button", { className: "sbtn", onClick: () => { try { navigator.clipboard.writeText(shareLink); setShareCopied(true); setTimeout(() => setShareCopied(false), 2000); } catch (_) {} } }, shareCopied ? "Copiato \u2713" : "Copia"),
-            React.createElement("button", { className: "pbtn", onClick: async () => { try { if (navigator.share) { await navigator.share({ title: "BAM Vision \u2014 Proposta di refit", text: "Ecco la proposta di refit:", url: shareLink }); } else { navigator.clipboard.writeText(shareLink); setShareCopied(true); setTimeout(() => setShareCopied(false), 2000); } } catch (_) {} } }, "\u21AA Condividi")
+            React.createElement("button", { className: "pbtn", onClick: async () => { try { if (navigator.share) { await navigator.share({ title: "BAM Real Estate \u2014 Proposta di restyling", text: "Ecco la proposta di refit:", url: shareLink }); } else { navigator.clipboard.writeText(shareLink); setShareCopied(true); setTimeout(() => setShareCopied(false), 2000); } } catch (_) {} } }, "\u21AA Condividi")
           )
         ),
         React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginTop: 20 } },
@@ -1477,7 +1480,7 @@ function BAMYachtApp() {
           React.createElement("div", { style: { fontFamily: G, fontSize: 24, color: "#e8dcc8", fontWeight: 300, letterSpacing: ".04em" } }, "\u25C8 Pannello di controllo"),
           React.createElement("button", { className: "sbtn", onClick: openAdmin, disabled: adminBusy }, adminBusy ? "Aggiorno\u2026" : "Aggiorna")
         ),
-        React.createElement("div", { style: { fontSize: 13, color: "rgba(232,220,200,.4)", marginBottom: 22, lineHeight: 1.6 } }, "Vista riservata. Broker, attivit\u00E0 e costi stimati di BAM Vision."),
+        React.createElement("div", { style: { fontSize: 13, color: "rgba(232,220,200,.4)", marginBottom: 22, lineHeight: 1.6 } }, "Vista riservata. Agenti, attivit\u00E0 e costi stimati di BAM Real Estate."),
         adminBusy && !adminData && React.createElement("div", { style: { color: "rgba(232,220,200,.5)", fontSize: 14, padding: "20px 0" } }, "Caricamento\u2026"),
         adminErr && React.createElement("div", { style: { color: "#e08a7a", fontSize: 13, padding: "12px 0" } }, adminErr),
         adminData && (function () {
@@ -1574,7 +1577,7 @@ function BAMYachtApp() {
         React.createElement("div", { style: { fontFamily: G, fontSize: 22, color: "#e8dcc8", marginBottom: 6, fontWeight: 300, letterSpacing: ".05em" } }, "Il tuo feedback"),
         fbDone
           ? React.createElement("div", null,
-              React.createElement("div", { style: { fontSize: 14, color: "rgba(232,220,200,.7)", lineHeight: 1.6, margin: "14px 0 24px" } }, "Grazie, ricevuto. Ogni segnalazione ci aiuta a migliorare BAM Vision."),
+              React.createElement("div", { style: { fontSize: 14, color: "rgba(232,220,200,.7)", lineHeight: 1.6, margin: "14px 0 24px" } }, "Grazie, ricevuto. Ogni segnalazione ci aiuta a migliorare BAM Real Estate."),
               React.createElement("div", { style: { display: "flex", justifyContent: "flex-end" } },
                 React.createElement("button", { className: "pbtn", onClick: () => setShowFeedback(false) }, "Chiudi")
               )
@@ -1607,7 +1610,7 @@ function BAMYachtApp() {
       )
     ),
       React.createElement("div", { style: { textAlign: "center", marginBottom: 56 } },
-        React.createElement("div", { style: { fontFamily: G, fontSize: 11, letterSpacing: ".38em", color: "rgba(201,168,76,.4)", textTransform: "uppercase", marginBottom: 18 } }, "BAM Vision · AI Refit Studio"),
+        React.createElement("div", { style: { fontFamily: G, fontSize: 11, letterSpacing: ".38em", color: "rgba(201,168,76,.4)", textTransform: "uppercase", marginBottom: 18 } }, "BAM Real Estate · AI Restyling Studio"),
         React.createElement("h1", { style: { fontFamily: G, fontSize: "clamp(28px,6vw,52px)", fontWeight: 300, lineHeight: 1.15, color: "#e8dcc8", marginBottom: 18, letterSpacing: ".03em" } },
           "Dal ", React.createElement("em", { style: { color: "rgba(232,220,200,.32)" } }, "prima"), " al ", React.createElement("em", { style: { color: "#c9a84c" } }, "concept refit"), React.createElement("br"), "in pochi secondi."
         ),
@@ -1618,7 +1621,7 @@ function BAMYachtApp() {
         React.createElement("div", { className: "sl" }, "Carica il Prima"),
         !img ? React.createElement("div", {
           className: "dz" + (drag ? " ov" : ""),
-          onClick: () => fileRef.current && fileRef.current.click(),
+          onClick: () => setShowSource(true),
           onDrop: (e) => { e.preventDefault(); setDrag(false); loadFile(e.dataTransfer.files[0]); },
           onDragOver: (e) => { e.preventDefault(); setDrag(true); },
           onDragLeave: () => setDrag(false)
@@ -1631,7 +1634,16 @@ function BAMYachtApp() {
           React.createElement("button", { onClick: () => { setImg(null); setResult(null); setResultB64(null); setResumeJob(null); clearJob(); }, style: { position: "absolute", top: 10, right: 10, width: 30, height: 30, background: "rgba(8,12,24,.85)", border: "1px solid rgba(201,168,76,.28)", color: "#c9a84c", borderRadius: "50%", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" } }, "\u00D7"),
           React.createElement("div", { style: { position: "absolute", bottom: 12, left: 12, background: "rgba(8,12,24,.72)", padding: "4px 12px", fontSize: 10, letterSpacing: ".2em", color: "rgba(232,220,200,.55)", textTransform: "uppercase", borderRadius: 2 } }, "Prima")
         ),
-        React.createElement("input", { ref: fileRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: (e) => loadFile(e.target.files[0]) })
+        React.createElement("input", { ref: fileRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: (e) => loadFile(e.target.files[0]) }),
+        React.createElement("input", { ref: camRef, type: "file", accept: "image/*", capture: "environment", style: { display: "none" }, onChange: (e) => loadFile(e.target.files[0]) }),
+        showSource && React.createElement("div", { onClick: () => setShowSource(false), style: { position: "fixed", inset: 0, background: "rgba(8,12,24,.78)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 } },
+          React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { background: "#1a2540", border: "1px solid rgba(201,168,76,.28)", borderRadius: 10, padding: "26px 22px", width: "100%", maxWidth: 340, textAlign: "center" } },
+            React.createElement("div", { style: { fontFamily: G, fontSize: 17, color: "#e8dcc8", marginBottom: 18 } }, "Aggiungi la foto"),
+            React.createElement("button", { className: "gbtn", onClick: () => { setShowSource(false); camRef.current && camRef.current.click(); }, style: { width: "100%", marginBottom: 10 } }, "Scatta foto"),
+            React.createElement("button", { className: "gbtn", onClick: () => { setShowSource(false); fileRef.current && fileRef.current.click(); }, style: { width: "100%", marginBottom: 14 } }, "Scegli dalla galleria"),
+            React.createElement("button", { onClick: () => setShowSource(false), style: { background: "none", border: "none", color: "rgba(232,220,200,.5)", fontSize: 13, cursor: "pointer", fontFamily: G2 } }, "Annulla")
+          )
+        )
       ),
       React.createElement("div", { className: "div" }),
       React.createElement("div", { style: { marginBottom: 42 } },
@@ -1695,7 +1707,7 @@ function BAMYachtApp() {
         )
       ),
       React.createElement("div", { style: { textAlign: "center", marginBottom: 42 } },
-        React.createElement("button", { className: "gbtn", onClick: generate, disabled: !img || busy || !refitText.trim() }, busy ? "Generazione in corso…" : "Genera Concept Refit"),
+        React.createElement("button", { className: "gbtn", onClick: generate, disabled: !img || busy || !refitText.trim() }, busy ? "Generazione in corso…" : "Genera Concept Restyling"),
         err && React.createElement("div", { style: { marginTop: 14, background: "rgba(220,80,80,.07)", border: "1px solid rgba(220,80,80,.2)", borderRadius: 3, padding: "12px 18px", color: "#e08080", fontSize: 14, lineHeight: 1.5 } }, err)
       ),
       busy && React.createElement("div", { style: { textAlign: "center", padding: "56px 32px", background: "rgba(255,255,255,.012)", border: "1px solid rgba(201,168,76,.07)", borderRadius: 3, marginBottom: 32 } },
@@ -1777,7 +1789,7 @@ function ShareView({ shareId }) {
   return React.createElement("div", { style: { minHeight: "100vh", background: "#1a2540", color: "#e8dcc8", padding: "0 0 64px" } },
     React.createElement("div", { style: { textAlign: "center", padding: "40px 20px 30px", borderBottom: "1px solid rgba(201,168,76,.15)" } },
       window.__LOGO_WHITE__ && React.createElement("img", { src: window.__LOGO_WHITE__, alt: "BAM", style: { height: 48, marginBottom: 14 } }),
-      React.createElement("div", { style: { fontFamily: G2, fontSize: 12, letterSpacing: ".34em", color: "#c9a84c", textTransform: "uppercase" } }, "BAM Vision · Concept Refit")
+      React.createElement("div", { style: { fontFamily: G2, fontSize: 12, letterSpacing: ".34em", color: "#c9a84c", textTransform: "uppercase" } }, "BAM Real Estate · Concept Restyling")
     ),
     React.createElement("div", { style: { maxWidth: 1100, margin: "0 auto", padding: "0 20px" } },
       loading && React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "rgba(232,220,200,.55)", fontSize: 16 } }, "Caricamento…"),
@@ -1805,7 +1817,7 @@ function ShareView({ shareId }) {
         }),
         React.createElement("div", { style: { textAlign: "center", padding: "30px 0 0", borderTop: "1px solid rgba(201,168,76,.12)", marginTop: 30 } },
           React.createElement("div", { style: { fontSize: 11.5, color: "rgba(232,220,200,.38)", lineHeight: 1.6, maxWidth: 620, margin: "0 auto" } }, "Concept generati con intelligenza artificiale a partire dalle foto reali dell'imbarcazione. Render indicativi, non rappresentano un progetto esecutivo."),
-          React.createElement("div", { style: { fontFamily: G2, fontSize: 13, letterSpacing: ".28em", color: "rgba(201,168,76,.6)", textTransform: "uppercase", marginTop: 18 } }, "BAM Vision")
+          React.createElement("div", { style: { fontFamily: G2, fontSize: 13, letterSpacing: ".28em", color: "rgba(201,168,76,.6)", textTransform: "uppercase", marginTop: 18 } }, "BAM Real Estate")
         )
       )
     )
