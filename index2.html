@@ -1832,13 +1832,13 @@ function BAMYachtApp() {
       const au = await supabaseClient.auth.getUser();
       const uid = au && au.data && au.data.user ? au.data.user.id : null;
       if (!uid) return map;
-      const q = await supabaseClient.from("dossier_videos").select("label,storage_path,created_at,is_merged").eq("broker_id", uid).eq("is_merged", false).order("created_at", { ascending: false }).limit(60);
+      const q = await supabaseClient.from("dossier_videos").select("label,dossier_room_id,kind,storage_path,created_at,is_merged").eq("broker_id", uid).eq("is_merged", false).order("created_at", { ascending: false }).limit(60);
       const rows = (q && q.data) ? q.data : [];
       const paths = rows.map(function (r) { return r.storage_path; }).filter(Boolean);
       if (!paths.length) return map;
       const sg = await supabaseClient.storage.from(VIDEO_BUCKET).createSignedUrls(paths, 3600);
       const byPath = {}; (((sg && sg.data) || [])).forEach(function (s) { if (s && s.path && s.signedUrl) byPath[s.path] = s.signedUrl; });
-      rows.forEach(function (r) { if (r.label && !map[r.label] && byPath[r.storage_path]) map[r.label] = byPath[r.storage_path]; });
+      rows.forEach(function (r) { if (!byPath[r.storage_path]) return; var uk = (r.dossier_room_id || "") + ":" + (r.kind || ""); if (!map[uk]) map[uk] = byPath[r.storage_path]; });
     } catch (_) {}
     return map;
   }
@@ -1849,7 +1849,7 @@ function BAMYachtApp() {
     setMergeErr(null); setMerging(true);
     try {
       const fresh = await freshSignedByLabel();
-      const mergeUrls = videoClips.map(function (c) { return (c.label && fresh[c.label]) ? fresh[c.label] : c.url; });
+      const mergeUrls = videoClips.map(function (c) { var uk = c.key || ((c.room_id || "") + ":" + (c.kind || "")); return fresh[uk] || c.url; });
       const url = await runMerge(mergeUrls);
       if (!url) throw new Error("Unione non riuscita.");
       setMergedUrl(url);
