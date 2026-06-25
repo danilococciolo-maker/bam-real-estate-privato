@@ -700,6 +700,7 @@ function BAMYachtApp() {
   const [tokenInput, setTokenInput] = useState("");
   const [imgAspect, setImgAspect] = useState("16/9");
   const [compareMode, setCompareMode] = useState(false);
+  const [fastMode, setFastMode] = useState(false);
   const [yacht, setYacht] = useState({ cantiere: "", modello: "", anno: "", oreMotore: "", manutenzione: "" });
   const [tick, setTick] = useState(0);
   const [userEmail, setUserEmail] = useState("");
@@ -1190,7 +1191,7 @@ function BAMYachtApp() {
         // PASSAGGIO 1 — RIMOZIONE DEDICATA: unico compito = togliere gli oggetti.
         // Con un'istruzione sola e mirata il modello obbedisce quasi sempre.
         const removalInstruction = "From this exact property interior photo, COMPLETELY REMOVE ONLY the following item(s) and NOTHING ELSE: " + removals.join("; ") + ". These are the ONLY pieces to delete. Do NOT remove, replace or alter any other seat, sofa, armchair, table or object, even if it is similar or right next to the one being removed." + (keeps.length ? " In particular, these pieces MUST stay fully present, untouched and in place: " + keeps.join("; ") + "." : "") + " Erase only the listed item(s) and rebuild the space they occupied as believable empty floor and the part of the room behind them, matching the existing floor, perspective, shadows and lighting. Do NOT restyle, recolour, move, rotate or add anything else: the walls, ceiling, windows, the outside view and the camera angle must stay EXACTLY as in the original. Photorealistic and seamless, as if those item(s) had never been there.";
-        const cleared = await mapStaggered(Array.from({ length: N_SAMPLES }), 350, () => runSample(removalInstruction, img));
+        const cleared = await mapStaggered(Array.from({ length: fastMode ? 1 : N_SAMPLES }), 350, () => runSample(removalInstruction, img));
         // se una rimozione fallisce, ripiego sull'originale per quella proposta
         const bases = cleared.map(c => c || img);
         // PASSAGGIO 2 — RISTILIZZO sopra l'immagine gia ripulita (in parallelo, sfalsato).
@@ -1199,14 +1200,14 @@ function BAMYachtApp() {
         // PASSAGGIO 1 — CONVERSIONE LEGNO DEDICATA: unico compito = ogni superficie in
         // legno diventa crema chiaro. Geometria, oggetti, finestre e vista invariati.
         const woodInstruction = "From this exact property interior photo, REFINISH every wood surface to a smooth matte light cream / off-white lacquer. Convert ALL wood to light cream: every wall panel and bulkhead, the ceiling with its trim and coffer/border, ALL doors and door frames, ALL window and porthole frames and surrounds, every built-in cabinet, wardrobe, drawer front and shelf, the nightstands, the desk, the bed base and its surround, and any wood moulding, skirting or handrail. Leave NO warm, orange, honey or dark wood tone anywhere — every surface that was wood must read as light cream. Change ONLY the colour and material of these wooden surfaces. Keep the EXACT same geometry, layout, every object and its position, the bed, the windows and portholes and the view outside them, the lighting direction, perspective and camera angle IDENTICAL to the original. Do not move, add or remove anything, and do not yet restyle fabrics, bedding or furniture shapes. Photorealistic, seamless, evenly lit.";
-        const lightened = await mapStaggered(Array.from({ length: N_SAMPLES }), 350, () => runSample(woodInstruction, img));
+        const lightened = await mapStaggered(Array.from({ length: fastMode ? 1 : N_SAMPLES }), 350, () => runSample(woodInstruction, img));
         // se la conversione fallisce su una proposta, ripiego sull'originale
         const bases = lightened.map(c => c || img);
         // PASSAGGIO 2 — applico lo stile completo sopra la base gia schiarita.
         variants = (await mapStaggered(bases, 350, b => runSample(editPrompt, b))).filter(Boolean);
       } else {
         // Nessuna rimozione e nessuno schema chiaro: un solo passaggio, proposte in parallelo.
-        variants = (await mapStaggered(Array.from({ length: N_SAMPLES }), 350, () => runSample(editPrompt, img))).filter(Boolean);
+        variants = (await mapStaggered(Array.from({ length: fastMode ? 1 : N_SAMPLES }), 350, () => runSample(editPrompt, img))).filter(Boolean);
       }
       if (!variants.length) throw new Error("Nessuna proposta generata. Riprova tra poco.");
 
@@ -1230,7 +1231,7 @@ function BAMYachtApp() {
         setLockStatus("nowindows");
       }
       let baseOutputUrl = variants[0];
-      try {
+      if (!fastMode) try {
         // Valuto TUTTE le proposte insieme (parallelo). Quando c'e una rimozione o
         // dei pezzi da tenere, il giudice verifica entrambe le cose.
         const scored = await mapStaggered(variants, 300, async (v) => {
@@ -1257,6 +1258,7 @@ function BAMYachtApp() {
       urlToDataUri(previewUrl).then(setResultB64).catch(() => {});
       saveJob({ status: "preview", resultUrl: previewUrl, styleLabel: label });
       setBusy(false);
+      if (fastMode) { saveJob({ status: "done", resultUrl: previewUrl }); return; }
       setUpscaling(true);
       (async () => {
         try {
@@ -2414,7 +2416,9 @@ function BAMYachtApp() {
         )
       ),
       React.createElement("div", { style: { textAlign: "center", marginBottom: 42 } },
-        (!batchPhotos.length) && React.createElement("button", { className: "gbtn", onClick: generate, disabled: !img || busy || !refitText.trim() }, busy ? "Generazione in corso…" : "Genera Concept Restyling"),
+        (!batchPhotos.length) && React.createElement("div", { onClick: function () { setFastMode(function (v) { return !v; }); }, style: { display: "inline-block", cursor: "pointer", marginBottom: 16, fontSize: 13, color: fastMode ? "#c9a84c" : "rgba(232,220,200,.5)", border: "1px solid " + (fastMode ? "rgba(201,168,76,.55)" : "rgba(232,220,200,.18)"), borderRadius: 999, padding: "8px 18px", letterSpacing: .3 } }, fastMode ? "⚡ Veloce ON · anteprima rapida" : "⚡ Attiva Veloce (anteprima rapida)"),
+        (!batchPhotos.length) && React.createElement("div", { style: { height: 14 } }),
+        (!batchPhotos.length) && React.createElement("button", { className: "gbtn", onClick: generate, disabled: !img || busy || !refitText.trim() }, busy ? "Generazione in corso…" : (fastMode ? "⚡ Genera anteprima veloce" : "Genera Concept Restyling")),
         err && React.createElement("div", { style: { marginTop: 14, background: "rgba(220,80,80,.07)", border: "1px solid rgba(220,80,80,.2)", borderRadius: 3, padding: "12px 18px", color: "#e08080", fontSize: 14, lineHeight: 1.5 } }, err)
       ),
       busy && React.createElement("div", { style: { textAlign: "center", padding: "56px 32px", background: "rgba(255,255,255,.012)", border: "1px solid rgba(201,168,76,.07)", borderRadius: 3, marginBottom: 32 } },
