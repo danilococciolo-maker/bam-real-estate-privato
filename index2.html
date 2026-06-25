@@ -1052,7 +1052,7 @@ function BAMYachtApp() {
   const generate = async () => {
     if (!img || busy) return;
     if (!token) { setShowSettings(true); return; }
-    if (!refitText.trim()) { setErr("Descrivi il refit che desideri."); return; }
+    if (!refitText.trim() && !stylePreset) { setErr("Scrivi un comando oppure scegli uno stile."); return; }
     setResumeJob(null);
     setBusy(true); setResult(null); setResultB64(null); setErr(null); setClarify(null); setStep(0); setLockStatus(null); setRemoveStatus(null); setRemoveList([]); setUpscaling(false); setSaveStatus(null);
     clearJob();
@@ -1126,7 +1126,7 @@ function BAMYachtApp() {
         }
         return typeof segOut === "string" ? segOut : null;
       }
-      const maskPromise = (async () => {
+      const maskPromise = fastMode ? Promise.resolve(null) : (async () => {
         try {
           let m = await segment(WINDOW_MASK_PROMPT);
           if (!m) m = await segment("window");
@@ -1187,6 +1187,8 @@ function BAMYachtApp() {
       const _keepsWood = /(manten|lascia|tieni|keep)[a-z\s]{0,20}(legno|wood)/.test(_txt);
       const lightScheme = _wantsLight && _wholeRoom && !_keepsWood;
 
+      var genBase = img;
+      if (fastMode) { try { genBase = await new Promise(function (resolve) { var im = new Image(); im.onload = function () { try { var md = 1024, w = im.width, h = im.height; if (w > md || h > md) { var rt = md / Math.max(w, h); w = Math.round(w * rt); h = Math.round(h * rt); } var c = document.createElement("canvas"); c.width = w; c.height = h; var cx = c.getContext("2d"); cx.drawImage(im, 0, 0, w, h); resolve(c.toDataURL("image/jpeg", 0.9)); } catch (_) { resolve(img); } }; im.onerror = function () { resolve(img); }; im.src = img; }); } catch (_) { genBase = img; } }
       let variants;
       if (removals.length) {
         // PASSAGGIO 1 — RIMOZIONE DEDICATA: unico compito = togliere gli oggetti.
@@ -1208,7 +1210,7 @@ function BAMYachtApp() {
         variants = (await mapStaggered(bases, 350, b => runSample(editPrompt, b))).filter(Boolean);
       } else {
         // Nessuna rimozione e nessuno schema chiaro: un solo passaggio, proposte in parallelo.
-        variants = (await mapStaggered(Array.from({ length: fastMode ? 1 : N_SAMPLES }), 350, () => runSample(editPrompt, img))).filter(Boolean);
+        variants = (await mapStaggered(Array.from({ length: fastMode ? 1 : N_SAMPLES }), 350, () => runSample(editPrompt, genBase))).filter(Boolean);
       }
       if (!variants.length) throw new Error("Nessuna proposta generata. Riprova tra poco.");
 
@@ -2421,7 +2423,7 @@ function BAMYachtApp() {
       React.createElement("div", { style: { textAlign: "center", marginBottom: 42 } },
         (!batchPhotos.length) && React.createElement("div", { onClick: function () { setFastMode(function (v) { return !v; }); }, style: { display: "inline-block", cursor: "pointer", marginBottom: 16, fontSize: 13, color: fastMode ? "#c9a84c" : "rgba(232,220,200,.5)", border: "1px solid " + (fastMode ? "rgba(201,168,76,.55)" : "rgba(232,220,200,.18)"), borderRadius: 999, padding: "8px 18px", letterSpacing: .3 } }, fastMode ? "⚡ Veloce ON · anteprima rapida" : "⚡ Attiva Veloce (anteprima rapida)"),
         (!batchPhotos.length) && React.createElement("div", { style: { height: 14 } }),
-        (!batchPhotos.length) && React.createElement("button", { className: "gbtn", onClick: generate, disabled: !img || busy || !refitText.trim() }, busy ? "Generazione in corso…" : (fastMode ? "⚡ Genera anteprima veloce" : "Genera Concept Restyling")),
+        (!batchPhotos.length) && React.createElement("button", { className: "gbtn", onClick: generate, disabled: !img || busy || (!refitText.trim() && !stylePreset) }, busy ? "Generazione in corso…" : (fastMode ? "⚡ Genera anteprima veloce" : "Genera Concept Restyling")),
         err && React.createElement("div", { style: { marginTop: 14, background: "rgba(220,80,80,.07)", border: "1px solid rgba(220,80,80,.2)", borderRadius: 3, padding: "12px 18px", color: "#e08080", fontSize: 14, lineHeight: 1.5 } }, err)
       ),
       busy && React.createElement("div", { style: { textAlign: "center", padding: "56px 32px", background: "rgba(255,255,255,.012)", border: "1px solid rgba(201,168,76,.07)", borderRadius: 3, marginBottom: 32 } },
