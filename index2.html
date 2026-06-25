@@ -1101,6 +1101,14 @@ function BAMYachtApp() {
       }
       setRemoveList(removals);
       setStyleLabel(label);
+      // RETE DI SICUREZZA: se il compose non ha prodotto un'istruzione (servizio non disponibile,
+      // chiave mancante, o solo-stile senza testo), garantisco comunque che lo STILE arrivi a Flux.
+      // Senza questo, ogni stile produrrebbe lo stesso identico render.
+      if (!styleClause || !styleClause.trim()) {
+        var _sc = refitText.trim();
+        if (stylePreset) { _sc = (_sc ? (_sc + ". ") : "") + "Restyle the entire interior in a " + stylePreset + " style: update the materials, finishes, colours, wall and floor treatment, furniture upholstery and the lighting mood to clearly reflect a " + stylePreset + " interior, while keeping the architecture, layout, windows, the outside view and the camera viewpoint identical to the original."; setStyleLabel(stylePreset); }
+        styleClause = _sc.trim() || "Restyle the interior in a refined, modern luxury look, keeping architecture and camera identical.";
+      }
 
       // STEP 1+2 IN PARALLELO — avvio la maschera-finestre SENZA bloccare:
       // gira in sottofondo mentre genero le proposte, cosi la segmentazione lenta
@@ -1154,7 +1162,7 @@ function BAMYachtApp() {
       // Flux Kontext Max: parametri DIVERSI da nano-banana.
       // Campo immagine = input_image (singolare). Flux lavora sui pixel veri = blocca la geometria.
       async function runFlux(prompt, baseImage) {
-        let p = await replicateCreate(MODEL_ENDPOINT, token, { input: { prompt: prompt, input_image: baseImage, aspect_ratio: "match_input_image", output_format: "jpg" } });
+        let p = await replicateCreate(MODEL_ENDPOINT, token, { input: { prompt: prompt, input_image: baseImage, aspect_ratio: "match_input_image", output_format: "jpg", seed: Math.floor(Math.random() * 1000000000) } });
         p = await replicatePoll(p, token, 90);
         return Array.isArray(p.output) ? p.output[0] : p.output;
       }
@@ -1172,6 +1180,7 @@ function BAMYachtApp() {
         try { fluxOut = await runFlux(prompt, baseImage); } catch (_) { fluxOut = null; }
         // Se Flux non risponde, ripiego: nano-banana direttamente sulla foto originale.
         if (!fluxOut) return await runNano(prompt, baseImage);
+        if (fastMode) return fluxOut; // VELOCE: solo Flux, una passata (geometria bloccata, niente nano)
         // Passo 2: nano-banana abbellisce il render di Flux, vincolato a NON cambiare la stanza.
         const polished = await runNano(NANO_POLISH, fluxOut);
         return polished || fluxOut; // se la rifinitura fallisce, resta il render di Flux (geometria ok)
