@@ -247,7 +247,6 @@ const VEO_ENDPOINT_STD = "/v1/models/google/veo-3.1/predictions"; // ultima riso
 const MERGE_MODEL_ENDPOINT = "/v1/models/lucataco/video-merge"; // modello community: serve la version
 const MUSIC_MERGE_MODEL_ENDPOINT = "/v1/models/lucataco/video-audio-merge"; // community: serve la version
 const MUSIC_URL = "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Martini%20Sunset.mp3"; // CC0 / dominio pubblico
-const TOPAZ_VIDEO_ENDPOINT = "/v1/models/topazlabs/video-upscale/predictions"; // upscale AI 4K (ufficiale, temporal)
 const VIDEO_N_SAMPLES = 2; // versioni Veo per foto, poi scelgo la migliore
 const VIDEO_JOB_KEY = "bam_video_job_v1"; // salvataggio locale per ripresa/riuso
 const SAVE_VIDEO_ENDPOINT = "/api/save-video"; // copia video su Supabase (permanente)
@@ -635,15 +634,6 @@ async function addMusic(videoUrl, musicUrl, token) {
   const ver = await modelVersion(MUSIC_MERGE_MODEL_ENDPOINT, token);
   let pred = await replicateCreate(PREDICTIONS_ENDPOINT, token, { version: ver, input: { video_file: videoUrl, audio_file: musicUrl, replace_audio: true, duration_mode: "video", audio_volume: 0.85 } });
   pred = await replicatePoll(pred, token, 150);
-  let out = pred.output;
-  if (Array.isArray(out)) out = out[0];
-  return out ? String(out) : null;
-}
-
-// Upscale AI fino a 4K con Topaz (modello ufficiale, temporal-aware: niente sfarfallio).
-async function topazUpscale(videoUrl, token) {
-  let pred = await replicateCreate(TOPAZ_VIDEO_ENDPOINT, token, { input: { video: videoUrl, upscale_factor: "2x" } });
-  pred = await replicatePoll(pred, token, 300);
   let out = pred.output;
   if (Array.isArray(out)) out = out[0];
   return out ? String(out) : null;
@@ -1755,15 +1745,6 @@ function BAMYachtApp() {
       }
     }
     if (!assembled) return null;
-    // 2) upscale AI a 4K, automatico. Best-effort: se non riesce resta il video unito.
-    try {
-      const url4k = await topazUpscale(assembled, token);
-      if (url4k) {
-        const p = await cloudSaveVideo(url4k, "merged", "Video unico", null, { source_count: urls.length, model: "upscale-4k" });
-        if (p) { try { const sg = await supabaseClient.storage.from(VIDEO_BUCKET).createSignedUrl(p, 3600); if (sg && sg.data && sg.data.signedUrl) return sg.data.signedUrl; } catch (_) {} }
-        return url4k;
-      }
-    } catch (_) {}
     return assembled;
   }
 
@@ -2118,7 +2099,7 @@ function BAMYachtApp() {
             })
           ),
           (videoClips.length >= 2 || (videoClips.length > 0 && !videoBusy)) && React.createElement("div", { style: { display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" } },
-            videoClips.length >= 2 && !mergedUrl && React.createElement("button", { className: "pbtn", onClick: mergeVideos, disabled: merging || videoBusy }, merging ? "Creo il video in 4K\u2026 (resta qui)" : "\u2728 Unisci in un video unico (" + videoClips.length + ")"),
+            videoClips.length >= 2 && !mergedUrl && React.createElement("button", { className: "pbtn", onClick: mergeVideos, disabled: merging || videoBusy }, merging ? "Creo il video unico\u2026 (resta qui)" : "\u2728 Unisci in un video unico (" + videoClips.length + ")"),
             !videoBusy && !merging && React.createElement("button", { className: "sbtn", onClick: resetVideoSession }, "Nuova sessione")
           )
         ),
@@ -2136,7 +2117,7 @@ function BAMYachtApp() {
               );
             })
           ),
-          savedVideos && savedVideos.filter(function (v) { return !v.is_merged; }).length >= 2 && React.createElement("button", { className: "pbtn", onClick: mergeSaved, disabled: merging || videoBusy, style: { marginTop: 12 } }, merging ? "Creo il video in 4K\u2026 (resta qui)" : "\u2728 Unisci le clip salvate")
+          savedVideos && savedVideos.filter(function (v) { return !v.is_merged; }).length >= 2 && React.createElement("button", { className: "pbtn", onClick: mergeSaved, disabled: merging || videoBusy, style: { marginTop: 12 } }, merging ? "Creo il video unico\u2026 (resta qui)" : "\u2728 Unisci le clip salvate")
         ),
         videoSelMode && archive && archive.length > 0 && React.createElement("div", { style: { position: "sticky", bottom: -1, marginTop: 18, paddingTop: 14, background: "linear-gradient(to top, #0b1020 72%, rgba(11,16,32,0))", display: "flex", flexDirection: "column", gap: 10 } },
           React.createElement("div", { style: { fontSize: 12, color: "#c9a84c", letterSpacing: ".06em" } }, videoSel.length === 0 ? "Nessuna foto selezionata" : (videoSel.length === 1 ? "1 foto selezionata" : videoSel.length + " foto selezionate")),
