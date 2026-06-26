@@ -5,10 +5,7 @@ import { spawn } from "child_process";
 import { writeFile, readFile, mkdtemp, rm } from "fs/promises";
 import os from "os";
 import path from "path";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
-const ffmpegPath = require("ffmpeg-static");
+import ffmpegPath from "ffmpeg-static";
 
 export const config = { maxDuration: 60 };
 
