@@ -55,18 +55,21 @@ export default async function handler(req, res) {
     let vw = 1920, vh = 1080;
     const m = probe.err.match(/,\s*(\d{2,5})x(\d{2,5})/);
     if (m) { vw = parseInt(m[1], 10); vh = parseInt(m[2], 10); }
-    const lw = Math.max(120, Math.round(vw * 0.17));
-    const mx = Math.round(vw * 0.025);
-    const my = Math.round(vh * 0.03);
+    const targetH = vh > 720 ? 720 : vh;
+    const sw = Math.round(vw * targetH / vh / 2) * 2;
+    const sh = targetH;
+    const lw = Math.max(120, Math.round(sw * 0.17));
+    const mx = Math.round(sw * 0.025);
+    const my = Math.round(sh * 0.03);
     const outFile = path.join(dir, "out.mp4");
 
     // 4) imprimo il marchio BAM in basso a destra
-    const fc = "[1:v]scale=" + lw + ":-1[wm];[0:v]eq=contrast=1.06:saturation=1.04:brightness=0.012:gamma=1.02,colorbalance=rs=0.018:rm=0.015:rh=0.012:bs=-0.022:bm=-0.018:bh=-0.025[g];[g][wm]overlay=main_w-overlay_w-" + mx + ":main_h-overlay_h-" + my + "[v]";
+    const fc = "[0:v]scale=" + sw + ":" + sh + "[g];[1:v]scale=" + lw + ":-1[wm];[g][wm]overlay=main_w-overlay_w-" + mx + ":main_h-overlay_h-" + my + "[v]";
     const enc = await run([
       "-i", inFile, "-i", logoFile, "-filter_complex", fc,
       "-map", "[v]", "-map", "0:a?",
-      "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", "-crf", "20",
-      "-c:a", "aac", "-movflags", "+faststart", outFile
+      "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-crf", "24", "-threads", "0",
+      "-c:a", "aac", outFile
     ]);
     if (enc.code !== 0) return res.status(500).json({ error: "ffmpeg failed", detail: enc.err.slice(-400) });
 
