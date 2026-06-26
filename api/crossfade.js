@@ -109,16 +109,15 @@ export default async function handler(req, res) {
     // marchio BAM Group in basso a destra
     const lw = Math.round(W * 0.16);
     parts.push("[" + logoIdx + ":v]scale=" + lw + ":-1[wm]");
-    parts.push("[vout]eq=contrast=1.06:saturation=1.04:brightness=0.012:gamma=1.02,colorbalance=rs=0.018:rm=0.015:rh=0.012:bs=-0.022:bm=-0.018:bh=-0.025[vg]");
-    parts.push("[vg][wm]overlay=main_w-overlay_w-48:main_h-overlay_h-40[vfinal]");
+    parts.push("[vout][wm]overlay=main_w-overlay_w-48:main_h-overlay_h-40[vfinal]");
     const fc = parts.join(";");
 
     // 4) eseguo ffmpeg
     const args = [];
     for (let i = 0; i < files.length; i++) args.push("-i", files[i]);
-    args.push("-stream_loop", "-1", "-i", musicFile, "-i", logoFile, "-filter_complex", fc, "-map", "[vfinal]", "-map", "[aout]", "-shortest",
-      "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", "-crf", "20",
-      "-c:a", "aac", "-movflags", "+faststart", path.join(dir, "out.mp4"));
+    args.push("-stream_loop", "-1", "-i", musicFile, "-i", logoFile, "-filter_complex", fc, "-map", "[vfinal]", "-map", "[aout]", "-t", String(total),
+      "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-crf", "24", "-threads", "0",
+      "-c:a", "aac", path.join(dir, "out.mp4"));
     const enc = await run(args);
     if (enc.code !== 0) return res.status(500).json({ error: "ffmpeg failed", detail: enc.err.slice(-400) });
 
