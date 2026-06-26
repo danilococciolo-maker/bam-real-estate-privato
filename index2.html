@@ -1741,7 +1741,7 @@ function BAMYachtApp() {
     // Attendi la comparsa del file finale (server maxDuration ~60s). Poll ogni 3s fino a ~80s.
     let signed = await trySign();
     if (!signed) {
-      const deadline = Date.now() + 80000;
+      const deadline = Date.now() + 310000;
       while (!signed && Date.now() < deadline) {
         await new Promise(function (res) { setTimeout(res, 3000); });
         signed = await trySign();
