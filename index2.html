@@ -1717,13 +1717,38 @@ function BAMYachtApp() {
     const uid = sess && sess.user ? sess.user.id : null;
     if (!jwt || !uid || !urls || urls.length < 2) return null;
     const path = uid + "/" + Date.now() + "_dissolve.mp4";
-    const r = await fetch(CROSSFADE_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ urls: urls, jwt: jwt, path: path }) });
-    if (!r.ok) return null;
-    const j = await r.json();
-    if (!j || !j.ok) return null;
-    let signed = null;
-    try { const sg = await supabaseClient.storage.from(VIDEO_BUCKET).createSignedUrl(path, 3600); signed = sg && sg.data ? sg.data.signedUrl : null; } catch (_) {}
+
+    // Firma il file finale se gia' presente su Supabase, altrimenti null.
+    async function trySign() {
+      try {
+        const sg = await supabaseClient.storage.from(VIDEO_BUCKET).createSignedUrl(path, 3600);
+        return sg && sg.data && sg.data.signedUrl ? sg.data.signedUrl : null;
+      } catch (_) { return null; }
+    }
+
+    // Lancia il crossfade sul server. Su mobile la richiesta lunga (~20-30s) puo' cadere
+    // mentre il server continua a lavorare e carica il file finale: per questo NON ci
+    // affidiamo alla risposta della fetch, ma verifichiamo la comparsa del file su Supabase.
+    let httpErr = false;
+    try {
+      const r = await fetch(CROSSFADE_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ urls: urls, jwt: jwt, path: path }) });
+      if (!r || !r.ok) httpErr = true;
+    } catch (_) { /* connessione caduta: il server puo' aver finito comunque */ }
+
+    // Errore HTTP esplicito (4xx/5xx): il server non produrra' il file -> ripiego.
+    if (httpErr) return null;
+
+    // Attendi la comparsa del file finale (server maxDuration ~60s). Poll ogni 3s fino a ~80s.
+    let signed = await trySign();
+    if (!signed) {
+      const deadline = Date.now() + 80000;
+      while (!signed && Date.now() < deadline) {
+        await new Promise(function (res) { setTimeout(res, 3000); });
+        signed = await trySign();
+      }
+    }
     if (!signed) return null;
+
     try { await supabaseClient.from("dossier_videos").insert({ broker_id: uid, label: "Video unico", kind: "merged", is_merged: true, storage_path: path, source_count: urls.length, model: "crossfade-ffmpeg" }); } catch (_) {}
     return signed;
   }
