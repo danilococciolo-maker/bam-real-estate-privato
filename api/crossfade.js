@@ -105,7 +105,7 @@ export default async function handler(req, res) {
     // 3) filtro: normalizzo+upscale morbido a 1080p, catena di dissolvenze, musica, marchio BAM
     const parts = [];
     for (let k = 0; k < files.length; k++) {
-      parts.push("[" + k + ":v]fps=" + fps + ",format=yuv420p,scale=" + W + ":" + H + ":force_original_aspect_ratio=decrease:flags=lanczos,pad=" + W + ":" + H + ":-1:-1,setsar=1,settb=AVTB[n" + k + "]");
+      parts.push("[" + k + ":v]fps=" + fps + ",format=yuv420p,scale=" + W + ":" + H + ":force_original_aspect_ratio=decrease:flags=bilinear,pad=" + W + ":" + H + ":-1:-1,setsar=1,settb=AVTB[n" + k + "]");
     }
     let label = "n0", total = durs[0];
     for (let k = 1; k < files.length; k++) {
@@ -132,7 +132,7 @@ export default async function handler(req, res) {
     const args = [];
     for (let i = 0; i < files.length; i++) args.push("-i", files[i]);
     args.push("-stream_loop", "-1", "-i", musicFile, "-i", logoFile, "-filter_complex", fc, "-map", "[vfinal]", "-map", "[aout]", "-t", String(total),
-      "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", "-crf", "20", "-threads", "0",
+      "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-crf", "23", "-threads", "0",
       "-c:a", "aac", path.join(dir, "out.mp4"));
     const enc = await run(args);
     if (enc.code !== 0) return res.status(500).json({ error: "ffmpeg failed", detail: enc.err.slice(-400) });
