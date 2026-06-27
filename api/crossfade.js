@@ -14,7 +14,6 @@ const SUPABASE_URL = "https://ruedykgseogsmieqmffd.supabase.co";
 const SUPABASE_ANON = "sb_publishable_jDuqu9CMy_yg4rY41jtXPA_cJWcIMxD"; // chiave pubblica
 const MUSIC_POOL = [
   "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Martini%20Sunset.mp3",
-  "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Take%20the%20Sting%20Out%20-%20Jazz%20Fi.mp3",
   "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Relaxing%20Ballad.mp3",
   "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Nomadic%20Sunset.mp3"
 ];
