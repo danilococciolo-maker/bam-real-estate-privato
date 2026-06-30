@@ -247,14 +247,13 @@ const VEO_ENDPOINT_STD = "/v1/models/google/veo-3.1/predictions"; // ultima riso
 const MERGE_MODEL_ENDPOINT = "/v1/models/lucataco/video-merge"; // modello community: serve la version
 const MUSIC_MERGE_MODEL_ENDPOINT = "/v1/models/lucataco/video-audio-merge"; // community: serve la version
 const MUSIC_URL = "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Martini%20Sunset.mp3"; // CC0 / dominio pubblico
-const TOPAZ_VIDEO_ENDPOINT = "/v1/models/topazlabs/video-upscale/predictions"; // upscale AI 4K (ufficiale, temporal)
 const VIDEO_N_SAMPLES = 2; // versioni Veo per foto, poi scelgo la migliore
 const VIDEO_JOB_KEY = "bam_video_job_v1"; // salvataggio locale per ripresa/riuso
 const SAVE_VIDEO_ENDPOINT = "/api/save-video"; // copia video su Supabase (permanente)
 const CROSSFADE_ENDPOINT = "/api/crossfade"; // unione con dissolvenza + musica (ffmpeg)
 const VIDEO_BUCKET = "dossier-videos";
-const PROMPT_VEO_MOVE = "Smooth, steady, continuous cinematic camera move through this luxury property interior at a natural flowing pace that calmly reveals the space; fluid and confident, neither slow and static nor fast and rushed. Reproduce the provided image with absolute fidelity. Every object stays fully opaque, solid and present for the entire clip: nothing becomes transparent, translucent, glassy, ghosted, faded or dissolved, no furniture disappears or loses its shape, columns and walls stay solid. Keep every material, color, finish and texture EXACTLY as in the image: do not change any metal, do not turn steel, chrome, brushed or satin metal into gold or brass, do not recolor anything, do not change any fabric, upholstery pattern or wood tone, do not restyle or redesign anything. All furniture is solid and rigid: every cabinet, drawer, door, hatch and panel stays fully closed and completely static, nothing opens or moves. No surface deforms, melts, smears, warps, stretches, ripples or morphs; surfaces stay sharp and stable at all times. Do not add, remove, move or alter any object, window, curtain, light fixture or decoration. No new objects, no people, no text. Architecture, columns, lines and proportions stay perfectly fixed. Soft balanced realistic light, photorealistic. Confident continuous camera, smooth and stable.";
-const VIDEO_JUDGE_PROMPT = "You are a strict quality inspector for luxury property interior videos. You are given a short AI-generated video (first input) and the original reference image it was generated from (second input). TASK 1 - stability: watch the whole video, especially the second half, for AI defects: any furniture, cabinet, column or wall that becomes transparent, translucent, ghosted, faded, dissolves or disappears; melting, warping, morphing, stretching or rippling of surfaces; cabinet doors or drawers opening; straight lines bending; a straight sofa turning into an angled or corner sofa, or any piece changing its shape. TASK 2 - fidelity: compare the video with the reference image and check material and color fidelity: chrome or steel turning into gold or brass, any color shift, any fabric, upholstery pattern or wood tone changing, any restyling. Ignore differences caused only by camera movement, zoom, framing or lighting. Reply with STRICT JSON only and nothing else, exactly in this form: {\"move_score\": integer 0-100 where 100 means perfectly stable with zero defects, \"fidelity\": integer 0-100 where 100 means materials and colors identical to the reference, \"notes\": \"short description or none\"}.";
+const PROMPT_VEO_MOVE = "Very slow, gentle, minimal camera movement that stays STRICTLY INSIDE the borders of this exact image: a slow, smooth zoom-in or tiny forward push toward the centre of the room, a very small creep that keeps almost the same framing for the whole clip, barely moving, almost still. The camera must NEVER pan, tilt, roll, orbit, swing, truck, crane or pull back, and must NEVER travel through, into or past any door, doorway, opening, archway, hallway, corridor or window. Show ONLY what is already visible inside this single frame and absolutely nothing else. Do NOT invent, add, imagine, extend, continue or reveal any new space, room, cabin, kitchen, galley, corridor, hallway, staircase, doorway, door, opening, window, wall or architecture beyond the edges of the frame; never expand or widen the scene; never reveal what could be behind, beyond or outside the visible space; never show the other side of any door or opening. Stay perfectly faithful to this exact image for the entire clip, as if filming the real room from a tripod with only a tiny slow forward creep, never uncovering anything that is not already in the picture. Every object stays fully opaque, solid and present for the entire clip: nothing becomes transparent, translucent, glassy, ghosted, faded or dissolved, no furniture disappears or loses its shape, columns and walls stay solid. Keep every material, color, finish and texture EXACTLY as in the image: do not change any metal, do not turn steel, chrome, brushed or satin metal into gold or brass, do not recolor anything, do not change any fabric, upholstery pattern or wood tone, do not restyle or redesign anything. All furniture is solid and rigid: every cabinet, drawer, door, hatch and panel stays fully closed and completely static, nothing opens or moves. No surface deforms, melts, smears, warps, stretches, ripples or morphs; surfaces stay sharp and stable at all times. Do not add, remove, move or alter any object, window, curtain, light fixture or decoration. No new objects, no people, no text. Architecture, columns, lines and proportions stay perfectly fixed. Soft balanced realistic light, photorealistic. Very slow, minimal, steady camera, smooth and stable, almost still.";
+const VIDEO_JUDGE_PROMPT = "You are a strict quality inspector for luxury property interior videos. You are given a short AI-generated video (first input) and the original reference image it was generated from (second input). TASK 1 - stability: watch the whole video, especially the second half, for AI defects: any furniture, cabinet, column or wall that becomes transparent, translucent, ghosted, faded, dissolves or disappears; melting, warping, morphing, stretching or rippling of surfaces; cabinet doors or drawers opening; straight lines bending; a straight sofa turning into an angled or corner sofa, or any piece changing its shape. TASK 2 - containment and honesty: check that the video shows ONLY the space that is visible in the reference image and never invents or reveals anything outside it. Heavily penalise the clip if the camera travels through, into or past a door, doorway, opening or window, if it pulls back, pans, orbits or widens to uncover new area, or if the video shows any invented or hallucinated room, cabin, kitchen, galley, corridor, hallway, staircase, doorway, door, opening, window, wall or architecture that is not clearly present in the reference image. A clip that keeps almost the same framing with only a small slow camera move is good; a clip that opens up or reveals new rooms or spaces is bad and must score low. TASK 3 - fidelity: compare the video with the reference image and check material and color fidelity: chrome or steel turning into gold or brass, any color shift, any fabric, upholstery pattern or wood tone changing, any restyling. Ignore differences caused only by lighting. Reply with STRICT JSON only and nothing else, exactly in this form: {\"move_score\": integer 0-100 where 100 means perfectly stable AND fully contained, with zero defects and zero invented or revealed space, and a low value if the clip invents or reveals any space, room, door or opening outside the reference image, \"fidelity\": integer 0-100 where 100 means materials and colors identical to the reference, \"notes\": \"short description or none\"}.";
 
 
 // ---- Persistenza del lavoro in corso (per riprendere dopo un'uscita / ricarica) ----
@@ -640,14 +639,7 @@ async function addMusic(videoUrl, musicUrl, token) {
   return out ? String(out) : null;
 }
 
-// Upscale AI fino a 4K con Topaz (modello ufficiale, temporal-aware: niente sfarfallio).
-async function topazUpscale(videoUrl, token) {
-  let pred = await replicateCreate(TOPAZ_VIDEO_ENDPOINT, token, { input: { video: videoUrl, upscale_factor: "2x" } });
-  pred = await replicatePoll(pred, token, 300);
-  let out = pred.output;
-  if (Array.isArray(out)) out = out[0];
-  return out ? String(out) : null;
-}
+// (funzione topazUpscale rimossa: niente piu upscale video Topaz, manteneva l'audio)
 
 // Unisce piu' clip in UN solo mp4 e applica una musica unica su tutta la durata.
 async function mergeClips(urls, token) {
@@ -671,6 +663,26 @@ function BAMLogo() {
   return React.createElement("img", { src: window.__LOGO_WHITE__, alt: "BAM Group", style: { height: "64px", width: "auto", display: "block" } });
 }
 
+function ConvoPanel(props) {
+  var questions = props.questions || [];
+  return React.createElement("div", { style: { maxWidth: 640, margin: "0 auto 24px", textAlign: "left", background: "rgba(201,168,76,.05)", border: "1px solid rgba(201,168,76,.25)", borderRadius: 6, padding: "20px 22px" } },
+    props.message && React.createElement("div", { style: { fontSize: 15, color: "#e8dcc8", lineHeight: 1.55, marginBottom: 16 } }, props.message),
+    questions.map(function (q, qi) {
+      return React.createElement("div", { key: q.id || qi, style: { marginBottom: 16 } },
+        React.createElement("div", { style: { fontSize: 13, color: "rgba(232,220,200,.7)", marginBottom: 8 } }, q.label),
+        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 8 } },
+          (q.options || []).map(function (opt, oi) {
+            var sel = props.answers[q.id || qi] === opt;
+            return React.createElement("button", { key: oi, type: "button", onClick: function () { var nx = Object.assign({}, props.answers); nx[q.id || qi] = opt; props.setAnswers(nx); }, style: { padding: "8px 14px", borderRadius: 4, cursor: "pointer", fontSize: 13.5, border: "1px solid " + (sel ? "#c9a84c" : "rgba(201,168,76,.3)"), background: sel ? "rgba(201,168,76,.18)" : "transparent", color: sel ? "#f0e2bd" : "#cdbf9e" } }, opt);
+          })
+        )
+      );
+    }),
+    React.createElement("textarea", { className: "inp", placeholder: "Vuoi aggiungere altro? (facoltativo)", value: props.free, onChange: function (e) { props.setFree(e.target.value); }, style: { width: "100%", minHeight: 60, marginTop: 4, marginBottom: 14, resize: "vertical" } }),
+    React.createElement("button", { className: "gbtn", type: "button", onClick: props.onSubmit, disabled: props.busy }, props.busy ? "Un attimo\u2026" : "Invia e prosegui")
+  );
+}
+
 function BAMYachtApp() {
   const [img, setImg] = useState(null);
   const [result, setResult] = useState(null);
@@ -684,6 +696,11 @@ function BAMYachtApp() {
   const [batchErr, setBatchErr] = useState(null);
   const [batchDone, setBatchDone] = useState(null);
   const [clarify, setClarify] = useState(null);
+  const [questions, setQuestions] = useState(null);
+  const [convoHistory, setConvoHistory] = useState([]);
+  const [convoMsg, setConvoMsg] = useState("");
+  const [answers, setAnswers] = useState({});
+  const [convoFree, setConvoFree] = useState("");
   const [styleLabel, setStyleLabel] = useState("Refit personalizzato");
   const [lockStatus, setLockStatus] = useState(null);
   const [removeStatus, setRemoveStatus] = useState(null);
@@ -987,7 +1004,7 @@ function BAMYachtApp() {
       if (!styleClause) styleClause = stylePreset || "refit elegante";
       var alreadyGone = removals.length ? " The following item(s) MUST stay completely absent: " + removals.join("; ") + "." : "";
       var keepClause = keeps.length ? " CRITICAL - do NOT remove or replace these pieces, they MUST stay present and in place: " + keeps.join("; ") + "." : "";
-      var SCAFFOLD = "Photorealistic refit of THIS exact property interior shown in the image. ABSOLUTE RULES, in order of priority: (1) Keep the room architecture, walls, ceiling, every window and porthole, the exact view seen OUTSIDE through the windows, and the camera viewpoint and perspective IDENTICAL to the original photo. (2) Do NOT redesign the room from scratch and do NOT remove the room's designed, built-in furniture: every piece of furniture and object that is ALREADY visible in THIS exact photo (and ONLY those pieces) must stay present, in the same type, position and count. You must NEVER add, invent or introduce any furniture or object that is not already visible in this exact photo — in particular NEVER add a sofa, couch, bed, armchair, bench or any seating that is not already physically present in the original photo. If the room is a kitchen, bathroom or hallway with no seating, it must stay that way — do not add a sofa or any living-room furniture, UNLESS the user explicitly asks to remove or move that specific piece. This is an ABSOLUTE rule that OVERRIDES any styling instruction and any style preset: NEVER change the TYPE, function or identity of an existing piece of furniture. A bed MUST stay a bed and must NEVER be turned into, replaced by or restyled as a sofa, couch, daybed, bench or any seating; a sofa stays a sofa; a dining table stays a dining table; a wardrobe stays a wardrobe. If the photo shows a bedroom, the result MUST remain that exact bedroom with its bed in the same position. You may change ONLY the finishes, fabrics, colours, materials and lighting of each existing piece — never its type or purpose. Even when the chosen style is usually associated with living rooms, do NOT introduce living-room furniture that was not already present, and do NOT remove the bed. As the VERY FIRST operation, however, gently tidy the scene to look like a clean listing photo by removing ONLY small, loose, portable clutter and rebuilding the matching surface behind it: items lying on the floor or on surfaces such as loose clothes, shoes, towels, bags, backpacks, bottles, cans, mugs, dishes, food, loose papers, magazines, cables, chargers, power strips, cleaning products, buckets, small boxes and toys. This tidy-up is STRICTLY limited to small portable objects. You must NEVER remove, replace, empty out, redesign or simplify any furniture or fixed element: every sofa, armchair, bed, table, chair, TV and TV stand, wall unit, bookshelf, shelving, sideboard, cabinet, wardrobe, desk, lamp, rug and every built-in MUST all stay, in the same number and the same position. Removing or replacing a piece of furniture is FORBIDDEN unless the user EXPLICITLY names that specific piece. When unsure whether something is clutter or furniture, KEEP it. Never turn the room into an empty or bare space. (3) Carry out EVERY change the user lists below as a MANDATORY instruction. Restyle the pieces that stay (colours, fabrics, materials, finishes, lighting) as described. (4) If the user asks for a lighter or different finish, apply it to the ENTIRE room and to EVERY wooden element so that NO original dark or warm-orange wood is left anywhere (unless the user asked to keep wood). The room must remain fully furnished, lived-in and realistic - never a bare empty room.";
+      var SCAFFOLD = "Photorealistic refit of THIS exact property interior shown in the image. ABSOLUTE RULES, in order of priority: (1) Keep the room architecture, walls, ceiling, every window and porthole, the exact view seen OUTSIDE through the windows, and the camera viewpoint and perspective IDENTICAL to the original photo. NEVER add, invent or introduce any furniture, object, decoration, plant, window, porthole, doorway, opening or architectural feature that is not already physically present in this exact photo, and NEVER invent or reveal any exterior view that is not already visible through the windows; keep curtains, blinds and shades in the same open or closed state as the original. (2) Do NOT redesign the room from scratch and do NOT remove the room's designed, built-in furniture: every piece of furniture and object that is ALREADY visible in THIS exact photo (and ONLY those pieces) must stay present, in the same type, position and count. You must NEVER add, invent or introduce any furniture or object that is not already visible in this exact photo — in particular NEVER add a sofa, couch, bed, armchair, bench or any seating that is not already physically present in the original photo. If the room is a kitchen, bathroom or hallway with no seating, it must stay that way — do not add a sofa or any living-room furniture, UNLESS the user explicitly asks to remove or move that specific piece. This is an ABSOLUTE rule that OVERRIDES any styling instruction and any style preset: NEVER change the TYPE, function or identity of an existing piece of furniture. A bed MUST stay a bed and must NEVER be turned into, replaced by or restyled as a sofa, couch, daybed, bench or any seating; a sofa stays a sofa; a dining table stays a dining table; a wardrobe stays a wardrobe. If the photo shows a bedroom, the result MUST remain that exact bedroom with its bed in the same position. You may change ONLY the finishes, fabrics, colours, materials and lighting of each existing piece — never its type or purpose. Even when the chosen style is usually associated with living rooms, do NOT introduce living-room furniture that was not already present, and do NOT remove the bed. As the VERY FIRST operation, however, gently tidy the scene to look like a clean listing photo by removing ONLY small, loose, portable clutter and rebuilding the matching surface behind it: items lying on the floor or on surfaces such as loose clothes, shoes, towels, bags, backpacks, bottles, cans, mugs, dishes, food, loose papers, magazines, cables, chargers, power strips, cleaning products, buckets, small boxes and toys. This tidy-up is STRICTLY limited to small portable objects. You must NEVER remove, replace, empty out, redesign or simplify any furniture or fixed element: every sofa, armchair, bed, table, chair, TV and TV stand, wall unit, bookshelf, shelving, sideboard, cabinet, wardrobe, desk, lamp, rug and every built-in MUST all stay, in the same number and the same position. Removing or replacing a piece of furniture is FORBIDDEN unless the user EXPLICITLY names that specific piece. When unsure whether something is clutter or furniture, KEEP it. Never turn the room into an empty or bare space. (3) Carry out EVERY change the user lists below as a MANDATORY instruction. Restyle the pieces that stay (colours, fabrics, materials, finishes, lighting) as described. (4) If the user asks for a lighter or different finish, apply it to the ENTIRE room and to EVERY wooden element so that NO original dark or warm-orange wood is left anywhere (unless the user asked to keep wood). The room must remain fully furnished, lived-in and realistic - never a bare empty room.";
       function buildPrompt(extra) { return SCAFFOLD + alreadyGone + keepClause + " User's requested changes: " + styleClause + "." + (extra || "") + " The result must be a believable, fully-furnished luxury property interior, professional architectural photography, ultra detailed."; }
       async function runEditB(endpoint, prompt, imgs) {
         var p = await replicateCreate(endpoint, token, { input: { prompt: prompt, image_input: imgs, aspect_ratio: "match_input_image" } });
@@ -1049,7 +1066,7 @@ function BAMYachtApp() {
     }
   }
 
-  const generate = async () => {
+  const generate = async (turnTextArg) => {
     if (!img || busy) return;
     if (!token) { setShowSettings(true); return; }
     if (!refitText.trim() && !stylePreset) { setErr("Scrivi un comando oppure scegli uno stile."); return; }
@@ -1058,6 +1075,9 @@ function BAMYachtApp() {
     clearJob();
     saveJob({ id: Date.now(), ts: Date.now(), status: "generating", refitText: refitText.trim(), room: room || "", stylePreset: stylePreset || "", imgAspect: imgAspect, beforeImg: img });
     try {
+      const turnText = (typeof turnTextArg === "string" && turnTextArg.trim()) ? turnTextArg.trim() : refitText.trim();
+      const convoOn = !fastMode;
+      const histForCall = Array.isArray(convoHistory) ? convoHistory : [];
       // 1) Motore di composizione: traduce la richiesta del broker in stile + materiali
       let composed = null;
       try {
@@ -1065,14 +1085,27 @@ function BAMYachtApp() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userRequest: refitText.trim(),
+            userRequest: turnText || (stylePreset ? undefined : refitText.trim()),
             room: room || undefined,
-            stylePreset: stylePreset || undefined
+            stylePreset: stylePreset || undefined,
+            conversational: convoOn,
+            history: histForCall
           })
         });
         if (cRes.ok) composed = await cRes.json();
       } catch (_) { composed = null; }
 
+      // --- Conversazione a stato (solo quando NON sei in anteprima rapida): se il cervello chiede dettagli, mostro le domande e NON renderizzo. ---
+      if (convoOn && composed && composed.mode === "ask" && Array.isArray(composed.questions) && composed.questions.length) {
+        setConvoHistory(histForCall.concat([{ role: "user", content: turnText }, { role: "assistant", content: composed.message || "" }]));
+        setConvoMsg(composed.message || "");
+        setQuestions(composed.questions);
+        setAnswers({});
+        setConvoFree("");
+        setBusy(false);
+        return;
+      }
+      if (convoOn) { setConvoHistory(histForCall.concat([{ role: "user", content: turnText }])); setQuestions(null); }
       // Costruisco l'istruzione da iniettare nello scaffold geometry-lock
       let label = "Refit personalizzato";
       let styleClause = refitText.trim();
@@ -1151,7 +1184,7 @@ function BAMYachtApp() {
       const keepClause = keeps.length
         ? " CRITICAL - do NOT remove or replace these pieces, they MUST stay present and in place: " + keeps.join("; ") + "."
         : "";
-      const editPrompt = "Photorealistic refit of THIS exact property interior shown in the image. ABSOLUTE RULES, in order of priority: (1) Keep the room architecture, walls, ceiling, every window and porthole, the exact view seen OUTSIDE through the windows, and the camera viewpoint and perspective IDENTICAL to the original photo. (2) Do NOT redesign the room from scratch and do NOT remove the room's designed, built-in furniture: every piece of furniture and object that is ALREADY visible in THIS exact photo (and ONLY those pieces) must stay present, in the same type, position and count. You must NEVER add, invent or introduce any furniture or object that is not already visible in this exact photo — in particular NEVER add a sofa, couch, bed, armchair, bench or any seating that is not already physically present in the original photo. If the room is a kitchen, bathroom or hallway with no seating, it must stay that way — do not add a sofa or any living-room furniture, UNLESS the user explicitly asks to remove or move that specific piece. This is an ABSOLUTE rule that OVERRIDES any styling instruction and any style preset: NEVER change the TYPE, function or identity of an existing piece of furniture. A bed MUST stay a bed and must NEVER be turned into, replaced by or restyled as a sofa, couch, daybed, bench or any seating; a sofa stays a sofa; a dining table stays a dining table; a wardrobe stays a wardrobe. If the photo shows a bedroom, the result MUST remain that exact bedroom with its bed in the same position. You may change ONLY the finishes, fabrics, colours, materials and lighting of each existing piece — never its type or purpose. Even when the chosen style is usually associated with living rooms, do NOT introduce living-room furniture that was not already present, and do NOT remove the bed. As the VERY FIRST operation, however, gently tidy the scene to look like a clean listing photo by removing ONLY small, loose, portable clutter and rebuilding the matching surface behind it: items lying on the floor or on surfaces such as loose clothes, shoes, towels, bags, backpacks, bottles, cans, mugs, dishes, food, loose papers, magazines, cables, chargers, power strips, cleaning products, buckets, small boxes and toys. This tidy-up is STRICTLY limited to small portable objects. You must NEVER remove, replace, empty out, redesign or simplify any furniture or fixed element: every sofa, armchair, bed, table, chair, TV and TV stand, wall unit, bookshelf, shelving, sideboard, cabinet, wardrobe, desk, lamp, rug and every built-in MUST all stay, in the same number and the same position. Removing or replacing a piece of furniture is FORBIDDEN unless the user EXPLICITLY names that specific piece. When unsure whether something is clutter or furniture, KEEP it. Never turn the room into an empty or bare space. (3) Carry out EVERY change the user lists below as a MANDATORY instruction, not an optional suggestion. In particular: if the user asks to REMOVE a specific item, that item MUST be completely absent from the result (replace the area with floor/empty space that matches the room) and every OTHER piece stays; if the user asks to MOVE or ROTATE a piece, reposition that piece accordingly while keeping the rest; if the user asks to ADD, SWAP or MODERNISE something (e.g. lamps), do exactly that. Make only the changes the user lists, nothing more. Restyle the pieces that stay (colours, fabrics, materials, finishes, lighting) as described. (4) If the user asks for a lighter or different finish, apply it to the ENTIRE room and to EVERY wooden element - all wall and ceiling panels, all wood trim, mouldings and borders, the ceiling coffer/border, door frames and doors, window frames, handrails, the nightstands, the headboard and its surround, and all built-in cabinetry - so that NO original dark or warm-orange wood is left anywhere in the result (unless the user asked to keep wood). Do not leave wood trim, frames or the ceiling border in the old finish: convert them too. The room must remain fully furnished, lived-in and realistic - never a bare empty room." + alreadyGone + keepClause + " User's requested changes: " + styleClause + ". The result must be a believable, fully-furnished luxury property interior, professional architectural photography, ultra detailed.";
+      const editPrompt = "Photorealistic refit of THIS exact property interior shown in the image. ABSOLUTE RULES, in order of priority: (1) Keep the room architecture, walls, ceiling, every window and porthole, the exact view seen OUTSIDE through the windows, and the camera viewpoint and perspective IDENTICAL to the original photo. NEVER add, invent or introduce any furniture, object, decoration, plant, window, porthole, doorway, opening or architectural feature that is not already physically present in this exact photo, and NEVER invent or reveal any exterior view that is not already visible through the windows; keep curtains, blinds and shades in the same open or closed state as the original. (2) Do NOT redesign the room from scratch and do NOT remove the room's designed, built-in furniture: every piece of furniture and object that is ALREADY visible in THIS exact photo (and ONLY those pieces) must stay present, in the same type, position and count. You must NEVER add, invent or introduce any furniture or object that is not already visible in this exact photo — in particular NEVER add a sofa, couch, bed, armchair, bench or any seating that is not already physically present in the original photo. If the room is a kitchen, bathroom or hallway with no seating, it must stay that way — do not add a sofa or any living-room furniture, UNLESS the user explicitly asks to remove or move that specific piece. This is an ABSOLUTE rule that OVERRIDES any styling instruction and any style preset: NEVER change the TYPE, function or identity of an existing piece of furniture. A bed MUST stay a bed and must NEVER be turned into, replaced by or restyled as a sofa, couch, daybed, bench or any seating; a sofa stays a sofa; a dining table stays a dining table; a wardrobe stays a wardrobe. If the photo shows a bedroom, the result MUST remain that exact bedroom with its bed in the same position. You may change ONLY the finishes, fabrics, colours, materials and lighting of each existing piece — never its type or purpose. Even when the chosen style is usually associated with living rooms, do NOT introduce living-room furniture that was not already present, and do NOT remove the bed. As the VERY FIRST operation, however, gently tidy the scene to look like a clean listing photo by removing ONLY small, loose, portable clutter and rebuilding the matching surface behind it: items lying on the floor or on surfaces such as loose clothes, shoes, towels, bags, backpacks, bottles, cans, mugs, dishes, food, loose papers, magazines, cables, chargers, power strips, cleaning products, buckets, small boxes and toys. This tidy-up is STRICTLY limited to small portable objects. You must NEVER remove, replace, empty out, redesign or simplify any furniture or fixed element: every sofa, armchair, bed, table, chair, TV and TV stand, wall unit, bookshelf, shelving, sideboard, cabinet, wardrobe, desk, lamp, rug and every built-in MUST all stay, in the same number and the same position. Removing or replacing a piece of furniture is FORBIDDEN unless the user EXPLICITLY names that specific piece. When unsure whether something is clutter or furniture, KEEP it. Never turn the room into an empty or bare space. (3) Carry out EVERY change the user lists below as a MANDATORY instruction, not an optional suggestion. In particular: if the user asks to REMOVE a specific item, that item MUST be completely absent from the result (replace the area with floor/empty space that matches the room) and every OTHER piece stays; if the user asks to MOVE or ROTATE a piece, reposition that piece accordingly while keeping the rest; if the user asks to ADD, SWAP or MODERNISE something (e.g. lamps), do exactly that. Make only the changes the user lists, nothing more. Restyle the pieces that stay (colours, fabrics, materials, finishes, lighting) as described. (4) If the user asks for a lighter or different finish, apply it to the ENTIRE room and to EVERY wooden element - all wall and ceiling panels, all wood trim, mouldings and borders, the ceiling coffer/border, door frames and doors, window frames, handrails, the nightstands, the headboard and its surround, and all built-in cabinetry - so that NO original dark or warm-orange wood is left anywhere in the result (unless the user asked to keep wood). Do not leave wood trim, frames or the ceiling border in the old finish: convert them too. The room must remain fully furnished, lived-in and realistic - never a bare empty room." + alreadyGone + keepClause + " User's requested changes: " + styleClause + ". The result must be a believable, fully-furnished luxury property interior, professional architectural photography, ultra detailed.";
 
       // runEdit generico: stesso modello, ma prompt e immagine di partenza variabili.
       async function runEdit(endpoint, prompt, baseImage) {
@@ -1755,15 +1788,7 @@ function BAMYachtApp() {
       }
     }
     if (!assembled) return null;
-    // 2) upscale AI a 4K, automatico. Best-effort: se non riesce resta il video unito.
-    try {
-      const url4k = await topazUpscale(assembled, token);
-      if (url4k) {
-        const p = await cloudSaveVideo(url4k, "merged", "Video unico", null, { source_count: urls.length, model: "upscale-4k" });
-        if (p) { try { const sg = await supabaseClient.storage.from(VIDEO_BUCKET).createSignedUrl(p, 3600); if (sg && sg.data && sg.data.signedUrl) return sg.data.signedUrl; } catch (_) {} }
-        return url4k;
-      }
-    } catch (_) {}
+    // Upscale Topaz rimosso (strappava l'audio): restituisco il video unito 1080p con audio.
     return assembled;
   }
 
@@ -2432,7 +2457,15 @@ function BAMYachtApp() {
       React.createElement("div", { style: { textAlign: "center", marginBottom: 42 } },
         (!batchPhotos.length) && React.createElement("div", { onClick: function () { setFastMode(function (v) { return !v; }); }, style: { display: "inline-block", cursor: "pointer", marginBottom: 16, fontSize: 13, color: fastMode ? "#c9a84c" : "rgba(232,220,200,.5)", border: "1px solid " + (fastMode ? "rgba(201,168,76,.55)" : "rgba(232,220,200,.18)"), borderRadius: 999, padding: "8px 18px", letterSpacing: .3 } }, fastMode ? "⚡ Veloce ON · anteprima rapida" : "⚡ Attiva Veloce (anteprima rapida)"),
         (!batchPhotos.length) && React.createElement("div", { style: { height: 14 } }),
-        (!batchPhotos.length) && React.createElement("button", { className: "gbtn", onClick: generate, disabled: !img || busy || (!refitText.trim() && !stylePreset) }, busy ? "Generazione in corso…" : (fastMode ? "⚡ Genera anteprima veloce" : "Genera Concept Restyling")),
+        (!batchPhotos.length && !questions) && React.createElement("button", { className: "gbtn", onClick: () => generate(), disabled: !img || busy || (!refitText.trim() && !stylePreset) }, busy ? "Generazione in corso…" : (fastMode ? "⚡ Genera anteprima veloce" : "Genera Concept Restyling")),
+        questions && React.createElement(ConvoPanel, { questions: questions, message: convoMsg, answers: answers, setAnswers: setAnswers, free: convoFree, setFree: setConvoFree, busy: busy, onSubmit: () => {
+          var parts = (questions || []).map(function (q, qi) { var a = answers[q.id || qi]; return a ? (q.label + ": " + a) : ""; }).filter(Boolean);
+          if (convoFree && convoFree.trim()) parts.push(convoFree.trim());
+          var answerText = parts.join(". ");
+          if (!answerText) return;
+          setQuestions(null);
+          generate(answerText);
+        } }),
         err && React.createElement("div", { style: { marginTop: 14, background: "rgba(220,80,80,.07)", border: "1px solid rgba(220,80,80,.2)", borderRadius: 3, padding: "12px 18px", color: "#e08080", fontSize: 14, lineHeight: 1.5 } }, err)
       ),
       busy && React.createElement("div", { style: { textAlign: "center", padding: "56px 32px", background: "rgba(255,255,255,.012)", border: "1px solid rgba(201,168,76,.07)", borderRadius: 3, marginBottom: 32 } },
